@@ -24,15 +24,14 @@ repositories {
 }
 
 dependencies {
-    // This dependency is used by the application.
-    implementation 'com.google.guava:guava:28.2-jre'
-
+    implementation 'org.json:json:20190722'
     // Use the latest Groovy version for Spock testing
     testImplementation 'org.codehaus.groovy:groovy-all:2.5.10'
 
     // Use the awesome Spock testing and specification framework even with Java
     testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
     testImplementation 'junit:junit:4.12'
+
 }
 
 application {
