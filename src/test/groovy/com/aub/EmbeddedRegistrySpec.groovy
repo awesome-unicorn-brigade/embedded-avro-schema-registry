@@ -4,6 +4,7 @@
 package com.aub
 
 import groovy.json.JsonSlurper
+import org.json.JSONObject
 import spock.lang.Specification
 
 import java.net.http.HttpClient
@@ -67,14 +68,56 @@ class EmbeddedRegistrySpec extends Specification {
 
     }
 
+    def "should fetch a schema by globally unique id"() {
+        def schema = "{\\\"type\\\": \\\"string\\\"}"
+        given:
+        def firstSubjectId = jsonSlurper.parseText(postSchemaForSubject("Subject-1", schema).body()).id
+        def secondSubjectId = jsonSlurper.parseText(postSchemaForSubject("Subject-2", schema).body()).id
+
+        when:
+        def response = httpClient.send(HttpRequest.newBuilder()
+                .uri(createURI("/schemas/ids/$firstSubjectId"))
+                .build(),
+                HttpResponse.BodyHandlers.ofString())
+
+        then:
+        response.statusCode() == 200
+        response.body() == '{"schema":"\\"string\\""}'
+
+    }
+
+
+    def "should fetch a more complicated schema by globally unique id"() {
+        def schema = new File("src/test/resources/sample-avro.json").text
+        given:
+        def firstSubjectId = jsonSlurper.parseText(postSchemaForSubject("Subject-1", schema).body()).id
+
+        when:
+        def response = httpClient.send(HttpRequest.newBuilder()
+                .uri(createURI("/schemas/ids/$firstSubjectId"))
+                .build(),
+                HttpResponse.BodyHandlers.ofString())
+
+        then:
+        response.statusCode() == 200
+        response.body() ==  wrapSchema(schema)
+
+    }
+
     def postSchemaForSubject(def subject, def schema) {
         def uri = createURI("/subjects/$subject/versions")
-        def body = HttpRequest.BodyPublishers.ofString("{\"schema\": \"$schema\"}")
+        def body = HttpRequest.BodyPublishers.ofString(wrapSchema(schema))
         return httpClient.send(HttpRequest.newBuilder()
                 .uri(uri)
                 .POST(body)
                 .build(),
                 HttpResponse.BodyHandlers.ofString())
+    }
+
+    private String wrapSchema(String schema) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("schema", schema);
+        jsonObject.toString()
     }
 
     private static URI createURI(String path) {

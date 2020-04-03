@@ -25,6 +25,7 @@ repositories {
 
 dependencies {
     implementation 'org.json:json:20190722'
+    implementation 'org.apache.avro:avro:1.9.2'
     // Use the latest Groovy version for Spock testing
     testImplementation 'org.codehaus.groovy:groovy-all:2.5.10'
 
