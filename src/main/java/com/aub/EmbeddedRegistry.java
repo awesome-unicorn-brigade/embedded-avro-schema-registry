@@ -1,6 +1,5 @@
 package com.aub;
 
-import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,14 +48,16 @@ public class EmbeddedRegistry {
                 if (subjectVersionMatcher.matches()) {
                     String subject = subjectVersionMatcher.group(1);
                     int key = registeredSchemas.size() + 1;
+
+                    JSONObject requestJson = new JSONObject(readBody(httpExchange.getRequestBody()));
                     
-                    registeredSchemas.put(key, new Schema.Parser()
-                        .parse(readBody(httpExchange)));
+                    registeredSchemas.put(key, new Schema.Parser().parse(requestJson.get("schema").toString()));
+//                    registeredSchemas.put(key, new Schema.Parser().parse(readBody(httpExchange)));
                     registeredSubjects.add(subject);
                     JSONObject uniqueID = new JSONObject();
                     uniqueID.put("id", key);
 
-                    byte response[] = uniqueID.toString().getBytes(StandardCharsets.UTF_8);
+                    byte[] response = uniqueID.toString().getBytes(StandardCharsets.UTF_8);
                     httpExchange.sendResponseHeaders(200, response.length);
                     OutputStream out = httpExchange.getResponseBody();
                     out.write(response);
@@ -66,7 +67,7 @@ public class EmbeddedRegistry {
                     JSONArray array = new JSONArray();
                     registeredSubjects.forEach(array::put);
                     String responseString = array.toString();
-                    byte response[] = responseString.getBytes(StandardCharsets.UTF_8);
+                    byte[] response = responseString.getBytes(StandardCharsets.UTF_8);
                     httpExchange.sendResponseHeaders(200, response.length);
                     OutputStream out = httpExchange.getResponseBody();
                     out.write(response);
@@ -80,7 +81,7 @@ public class EmbeddedRegistry {
                     JSONObject obj = new JSONObject();
                     obj.put("schema", schemaDefinition);
                     
-                    byte response[] = obj.toString()
+                    byte[] response = obj.toString()
                         .getBytes(StandardCharsets.UTF_8);
                     httpExchange.sendResponseHeaders(200, response.length);
                     OutputStream out = httpExchange.getResponseBody();
@@ -99,9 +100,16 @@ public class EmbeddedRegistry {
         }
     }
 
-    private String readBody(HttpExchange httpExchange) {
-        return new BufferedReader(new InputStreamReader(httpExchange.getRequestBody()))
+    private String readBody(InputStream requestBody) {
+        String bodyReadAsArray = new BufferedReader(new InputStreamReader(requestBody))
             .lines().collect(Collectors.joining("\n"));
+        return bodyReadAsArray.substring(1, bodyReadAsArray.length() - 1);
+            
+    }
+    
+    public void purge() {
+        this.registeredSubjects.clear();
+        this.registeredSchemas.clear();
     }
 
     public void stop() {
