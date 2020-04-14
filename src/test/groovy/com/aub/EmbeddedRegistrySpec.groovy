@@ -45,7 +45,7 @@ class EmbeddedRegistrySpec extends Specification {
         response.status == 200
         response.data.id == 1
     }
-    
+
     def "should list all subjects"() {
         given:
         postSchemaForSubject("Subject-1", "{\"type\": \"string\"}")
@@ -62,11 +62,11 @@ class EmbeddedRegistrySpec extends Specification {
     }
 
     def "should fetch a schema by globally unique id"() {
-        def schema = "{\\\"type\\\": \\\"string\\\"}"
+        def schema = "{\"type\": \"string\"}"
         given:
-        def firstSubjectId = 
+        def firstSubjectId =
                 postSchemaForSubject("Subject-1", schema).data.id
-        def secondSubjectId = 
+        def secondSubjectId =
                 postSchemaForSubject("Subject-2", schema).data.id
 
         when:
@@ -75,29 +75,27 @@ class EmbeddedRegistrySpec extends Specification {
 
         then:
         firstSubjectResponse.status == 200
-        firstSubjectResponse.data == '{"schema":"\\"string\\""}'
+        new JSONObject(firstSubjectResponse.data.getText()).get("schema") == "\"string\""
         secondSubjectResponse.status == 200
-        secondSubjectResponse.data == '{"schema":"\\"string\\""}'
+        new JSONObject(secondSubjectResponse.data.getText()).get("schema") == "\"string\""
 
     }
-//
-//
-//    def "should fetch a more complicated schema by globally unique id"() {
-//        def schema = new File("src/test/resources/sample-avro.json").text
-//        given:
-//        def firstSubjectId = postSchemaForSubject("Subject-1", schema).data.id
-//
-//        when:
-//        def response = httpClient.send(HttpRequest.newBuilder()
-//                .uri(createURI("/schemas/ids/$firstSubjectId"))
-//                .build(),
-//                HttpResponse.BodyHandlers.ofString())
-//
-//        then:
-//        response.statusCode() == 200
-//        response.body() == wrapSchema(schema)
-//
-//    }
+
+
+    def "should register and fetch a more complicated schema by globally unique id"() {
+        def schema = new File("src/test/resources/sample-avro.json").text
+        given:
+        def firstSubjectId = postSchemaForSubject("Subject-1", schema).data.id
+
+        when:
+
+        def response = httpClient.get(path: "/schemas/ids/$firstSubjectId")
+
+        then:
+        response.status == 200
+        new JSONObject(response.data.getText()).get("schema") == schema.replaceAll("\n", "").replaceAll(" ", "")
+
+    }
 
     def postSchemaForSubject(def subject, def schema) {
         return httpClient.post(

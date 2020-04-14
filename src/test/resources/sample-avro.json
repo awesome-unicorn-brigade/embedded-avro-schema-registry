@@ -1,7 +1,7 @@
 {
-  "namespace": "example.avro",
   "type": "record",
   "name": "User",
+  "namespace": "example.avro",
   "fields": [
     {
       "name": "name",

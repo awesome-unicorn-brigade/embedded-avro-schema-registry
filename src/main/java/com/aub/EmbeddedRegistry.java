@@ -52,7 +52,6 @@ public class EmbeddedRegistry {
                     JSONObject requestJson = new JSONObject(readBody(httpExchange.getRequestBody()));
                     
                     registeredSchemas.put(key, new Schema.Parser().parse(requestJson.get("schema").toString()));
-//                    registeredSchemas.put(key, new Schema.Parser().parse(readBody(httpExchange)));
                     registeredSubjects.add(subject);
                     JSONObject uniqueID = new JSONObject();
                     uniqueID.put("id", key);
